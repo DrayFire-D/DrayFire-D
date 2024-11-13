@@ -10,8 +10,7 @@ let currentUserMessage = null;
 let isGeneratingResponse = false;
 
 const GOOGLE_API_KEY = "AIzaSyB3W-_MVc-EMvVeo4epuw5NFuTkZRw7IRo";
-const API_REQUEST_URL = https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY};
-
+const API_REQUEST_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`;
 
 // Load saved data from local storage
 const loadSavedChatHistory = () => {
@@ -26,14 +25,14 @@ const loadSavedChatHistory = () => {
     // Iterate through saved chat history and display messages
     savedConversations.forEach(conversation => {
         // Display the user's message
-        const userMessageHtml = 
+        const userMessageHtml = `
 
             <div class="message__content">
                 <img class="message__avatar" src="assets/profile.png" alt="User avatar">
                <p class="message__text">${conversation.userMessage}</p>
             </div>
         
-        ;
+        `;
 
         const outgoingMessageElement = createChatMessageElement(userMessageHtml, "message--outgoing");
         chatHistoryContainer.appendChild(outgoingMessageElement);
@@ -43,7 +42,7 @@ const loadSavedChatHistory = () => {
         const parsedApiResponse = marked.parse(responseText); // Convert to HTML
         const rawApiResponse = responseText; // Plain text version
 
-        const responseHtml = 
+        const responseHtml = `
         
            <div class="message__content">
                 <img class="message__avatar" src="assets/gemini.svg" alt="Gemini avatar">
@@ -56,7 +55,7 @@ const loadSavedChatHistory = () => {
             </div>
             <span onClick="copyMessageToClipboard(this)" class="message__icon hide"><i class='bx bx-copy-alt'></i></span>
         
-        ;
+        `;
 
         const incomingMessageElement = createChatMessageElement(responseHtml, "message--incoming");
         chatHistoryContainer.appendChild(incomingMessageElement);
@@ -162,14 +161,14 @@ const addCopyButtonToCodeBlocks = () => {
         block.appendChild(languageLabel);
 
         const copyButton = document.createElement('button');
-        copyButton.innerHTML = <i class='bx bx-copy'></i>;
+        copyButton.innerHTML = `<i class='bx bx-copy'></i>`;
         copyButton.classList.add('code__copy-btn');
         block.appendChild(copyButton);
 
         copyButton.addEventListener('click', () => {
             navigator.clipboard.writeText(codeElement.innerText).then(() => {
-                copyButton.innerHTML = <i class='bx bx-check'></i>;
-                setTimeout(() => copyButton.innerHTML = <i class='bx bx-copy'></i>, 2000);
+                copyButton.innerHTML = `<i class='bx bx-check'></i>`;
+                setTimeout(() => copyButton.innerHTML = `<i class='bx bx-copy'></i>`, 2000);
             }).catch(err => {
                 console.error("Copy failed:", err);
                 alert("Unable to copy text!");
@@ -180,7 +179,7 @@ const addCopyButtonToCodeBlocks = () => {
 
 // Show loading animation during API request
 const displayLoadingAnimation = () => {
-    const loadingHtml = 
+    const loadingHtml = `
 
         <div class="message__content">
             <img class="message__avatar" src="assets/gemini.svg" alt="Gemini avatar">
@@ -193,7 +192,7 @@ const displayLoadingAnimation = () => {
         </div>
         <span onClick="copyMessageToClipboard(this)" class="message__icon hide"><i class='bx bx-copy-alt'></i></span>
     
-    ;
+    `;
 
     const loadingMessageElement = createChatMessageElement(loadingHtml, "message--incoming", "message--loading");
     chatHistoryContainer.appendChild(loadingMessageElement);
@@ -206,8 +205,8 @@ const copyMessageToClipboard = (copyButton) => {
     const messageContent = copyButton.parentElement.querySelector(".message__text").innerText;
 
     navigator.clipboard.writeText(messageContent);
-    copyButton.innerHTML = <i class='bx bx-check'></i>; // Confirmation icon
-    setTimeout(() => copyButton.innerHTML = <i class='bx bx-copy-alt'></i>, 1000); // Revert icon after 1 second
+    copyButton.innerHTML = `<i class='bx bx-check'></i>`; // Confirmation icon
+    setTimeout(() => copyButton.innerHTML = `<i class='bx bx-copy-alt'></i>`, 1000); // Revert icon after 1 second
 };
 
 // Handle sending chat messages
@@ -217,14 +216,14 @@ const handleOutgoingMessage = () => {
 
     isGeneratingResponse = true;
 
-    const outgoingMessageHtml = 
+    const outgoingMessageHtml = `
     
         <div class="message__content">
             <img class="message__avatar" src="assets/profile.png" alt="User avatar">
             <p class="message__text"></p>
         </div>
 
-    ;
+    `;
 
     const outgoingMessageElement = createChatMessageElement(outgoingMessageHtml, "message--outgoing");
     outgoingMessageElement.querySelector(".message__text").innerText = currentUserMessage;
@@ -274,4 +273,3 @@ messageForm.addEventListener('submit', (e) => {
 
 // Load saved chat history on page load
 loadSavedChatHistory();
-
