@@ -11,6 +11,38 @@ let isGeneratingResponse = false;
 
 const GOOGLE_API_KEY = "AIzaSyB3W-_MVc-EMvVeo4epuw5NFuTkZRw7IRo";
 const API_REQUEST_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`;
+// Reference to file upload button
+const fileUploadButton = document.getElementById("uploadButton");
+const fileUploadInput = document.getElementById("fileUpload");
+
+fileUploadButton.addEventListener('click', () => {
+    fileUploadInput.click();
+});
+
+fileUploadInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        // Here you would implement the API request to send the file to Gemini
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(API_REQUEST_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('File upload failed');
+
+        const responseData = await response.json();
+        console.log("File uploaded successfully:", responseData);
+
+        // Display success message or update chat with file upload response
+    } catch (error) {
+        console.error("Error uploading file:", error);
+    }
+});
 
 // Load saved data from local storage
 const loadSavedChatHistory = () => {
