@@ -248,6 +248,12 @@ body.hide-header .header{
 .prompt__form-input:valid ~ #uploadButton {
     right: 6rem;
 }
+.prompt__file-info {
+    font-size: 0.85rem;
+    color: var(--text-secondary-color);
+    margin-top: 0.5rem;
+    text-align: center;
+}
 
 .prompt__disclaim{
     text-align: center;
