@@ -8,85 +8,10 @@ const clearChatButton = document.getElementById("deleteButton");
 // State variables
 let currentUserMessage = null;
 let isGeneratingResponse = false;
+let attachedFile = null;
 
 const GOOGLE_API_KEY = "AIzaSyB3W-_MVc-EMvVeo4epuw5NFuTkZRw7IRo";
 const API_REQUEST_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`;
-// Reference to file upload button
-// Riferimenti agli elementi del form
-const fileUploadButton = document.getElementById("uploadButton");
-const fileUploadInput = document.getElementById("fileUpload");
-let attachedFile = null;
-
-// Apertura del selettore file quando si clicca sull'icona di caricamento
-fileUploadButton.addEventListener('click', () => {
-    fileUploadInput.click();
-});
-
-// Assegna il file scelto alla variabile attachedFile
-fileUploadInput.addEventListener('change', (event) => {
-    attachedFile = event.target.files[0];
-    const fileInfoElement = document.getElementById("fileInfo");
-    const fileNameElement = document.getElementById("fileName");
-
-    if (attachedFile) {
-        fileNameElement.innerText = attachedFile.name;
-        fileInfoElement.style.display = "block";
-    } else {
-        fileInfoElement.style.display = "none";
-    }
-});
-
-
-// Funzione per gestire l'invio del prompt e allegato (se presente)
-const handleOutgoingMessage = async () => {
-    currentUserMessage = messageForm.querySelector(".prompt__form-input").value.trim();
-    if (!currentUserMessage || isGeneratingResponse) return;
-
-    isGeneratingResponse = true;
-
-    // Crea il messaggio in uscita e visualizzalo
-    const outgoingMessageHtml = `
-        <div class="message__content">
-            <img class="message__avatar" src="assets/profile.png" alt="User avatar">
-            <p class="message__text">${currentUserMessage}</p>
-        </div>
-    `;
-    const outgoingMessageElement = createChatMessageElement(outgoingMessageHtml, "message--outgoing");
-    chatHistoryContainer.appendChild(outgoingMessageElement);
-
-    // Mostra animazione di caricamento per la risposta
-    displayLoadingAnimation();
-
-    try {
-        // Prepara i dati da inviare all'API
-        const formData = new FormData();
-        formData.append("prompt", currentUserMessage);
-        if (attachedFile) {
-            formData.append("file", attachedFile);
-        }
-
-        // Invia richiesta all'API
-        const response = await fetch(API_REQUEST_URL, {
-            method: "POST",
-            body: formData,
-        });
-        const responseData = await response.json();
-
-        if (!response.ok) throw new Error(responseData.error.message);
-
-        // Ottieni la risposta e visualizzala
-        const responseText = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsedApiResponse = marked.parse(responseText);
-        const rawApiResponse = responseText;
-        showTypingEffect(rawApiResponse, parsedApiResponse, outgoingMessageElement.querySelector(".message__text"));
-    } catch (error) {
-        outgoingMessageElement.querySelector(".message__text").innerText = error.message;
-    } finally {
-        attachedFile = null; // Reimposta il file
-        isGeneratingResponse = false;
-    }
-};
-
 
 // Load saved data from local storage
 const loadSavedChatHistory = () => {
@@ -102,14 +27,11 @@ const loadSavedChatHistory = () => {
     savedConversations.forEach(conversation => {
         // Display the user's message
         const userMessageHtml = `
-
             <div class="message__content">
                 <img class="message__avatar" src="assets/profile.png" alt="User avatar">
                <p class="message__text">${conversation.userMessage}</p>
             </div>
-        
         `;
-
         const outgoingMessageElement = createChatMessageElement(userMessageHtml, "message--outgoing");
         chatHistoryContainer.appendChild(outgoingMessageElement);
 
@@ -119,7 +41,6 @@ const loadSavedChatHistory = () => {
         const rawApiResponse = responseText; // Plain text version
 
         const responseHtml = `
-        
            <div class="message__content">
                 <img class="message__avatar" src="assets/gemini.svg" alt="Gemini avatar">
                 <p class="message__text"></p>
@@ -130,9 +51,7 @@ const loadSavedChatHistory = () => {
                 </div>
             </div>
             <span onClick="copyMessageToClipboard(this)" class="message__icon hide"><i class='bx bx-copy-alt'></i></span>
-        
         `;
-
         const incomingMessageElement = createChatMessageElement(responseHtml, "message--incoming");
         chatHistoryContainer.appendChild(incomingMessageElement);
 
@@ -145,7 +64,7 @@ const loadSavedChatHistory = () => {
     document.body.classList.toggle("hide-header", savedConversations.length > 0);
 };
 
-// create a new chat message element
+// Create a new chat message element
 const createChatMessageElement = (htmlContent, ...cssClasses) => {
     const messageElement = document.createElement("div");
     messageElement.classList.add("message", ...cssClasses);
@@ -184,43 +103,61 @@ const showTypingEffect = (rawText, htmlText, messageElement, incomingMessageElem
     }, 75);
 };
 
-// Fetch API response based on user input
-const requestApiResponse = async (incomingMessageElement) => {
-    const messageTextElement = incomingMessageElement.querySelector(".message__text");
+// Handle sending chat messages with optional attached file
+const handleOutgoingMessage = async () => {
+    currentUserMessage = messageForm.querySelector(".prompt__form-input").value.trim();
+    if (!currentUserMessage || isGeneratingResponse) return; // Exit if no message or already generating response
+
+    isGeneratingResponse = true;
+
+    // Create the outgoing message element
+    const outgoingMessageHtml = `
+        <div class="message__content">
+            <img class="message__avatar" src="assets/profile.png" alt="User avatar">
+            <p class="message__text">${currentUserMessage}</p>
+        </div>
+    `;
+    const outgoingMessageElement = createChatMessageElement(outgoingMessageHtml, "message--outgoing");
+    chatHistoryContainer.appendChild(outgoingMessageElement);
+
+    displayLoadingAnimation();
 
     try {
+        // Prepare data for API request
+        const formData = new FormData();
+        formData.append("prompt", currentUserMessage);
+        if (attachedFile) {
+            formData.append("file", attachedFile);
+        }
+
         const response = await fetch(API_REQUEST_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: currentUserMessage }] }]
-            }),
+            body: formData,
         });
 
         const responseData = await response.json();
         if (!response.ok) throw new Error(responseData.error.message);
 
         const responseText = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!responseText) throw new Error("Invalid API response.");
-
         const parsedApiResponse = marked.parse(responseText);
-        const rawApiResponse = responseText;
 
-        showTypingEffect(rawApiResponse, parsedApiResponse, messageTextElement, incomingMessageElement);
+        showTypingEffect(responseText, parsedApiResponse, outgoingMessageElement.querySelector(".message__text"));
 
         // Save conversation in local storage
         let savedConversations = JSON.parse(localStorage.getItem("saved-api-chats")) || [];
         savedConversations.push({
             userMessage: currentUserMessage,
-            apiResponse: responseData
+            apiResponse: responseData,
+            attachedFileName: attachedFile ? attachedFile.name : null
         });
         localStorage.setItem("saved-api-chats", JSON.stringify(savedConversations));
     } catch (error) {
         isGeneratingResponse = false;
-        messageTextElement.innerText = error.message;
-        messageTextElement.closest(".message").classList.add("message--error");
+        outgoingMessageElement.querySelector(".message__text").innerText = error.message;
+        outgoingMessageElement.classList.add("message--error");
     } finally {
-        incomingMessageElement.classList.remove("message--loading");
+        attachedFile = null; // Reset the file after sending
+        isGeneratingResponse = false;
     }
 };
 
@@ -256,7 +193,6 @@ const addCopyButtonToCodeBlocks = () => {
 // Show loading animation during API request
 const displayLoadingAnimation = () => {
     const loadingHtml = `
-
         <div class="message__content">
             <img class="message__avatar" src="assets/gemini.svg" alt="Gemini avatar">
             <p class="message__text"></p>
@@ -267,71 +203,19 @@ const displayLoadingAnimation = () => {
             </div>
         </div>
         <span onClick="copyMessageToClipboard(this)" class="message__icon hide"><i class='bx bx-copy-alt'></i></span>
-    
     `;
-
     const loadingMessageElement = createChatMessageElement(loadingHtml, "message--incoming", "message--loading");
     chatHistoryContainer.appendChild(loadingMessageElement);
-
     requestApiResponse(loadingMessageElement);
 };
 
 // Copy message to clipboard
 const copyMessageToClipboard = (copyButton) => {
     const messageContent = copyButton.parentElement.querySelector(".message__text").innerText;
-
     navigator.clipboard.writeText(messageContent);
     copyButton.innerHTML = `<i class='bx bx-check'></i>`; // Confirmation icon
     setTimeout(() => copyButton.innerHTML = `<i class='bx bx-copy-alt'></i>`, 1000); // Revert icon after 1 second
 };
-
-// Handle sending chat messages
-const handleOutgoingMessage = () => {
-    currentUserMessage = messageForm.querySelector(".prompt__form-input").value.trim() || currentUserMessage;
-    if (!currentUserMessage || isGeneratingResponse) return; // Exit if no message or already generating response
-
-    isGeneratingResponse = true;
-
-    const outgoingMessageHtml = `
-    
-        <div class="message__content">
-            <img class="message__avatar" src="assets/profile.png" alt="User avatar">
-            <p class="message__text"></p>
-        </div>
-
-    `;
-
-    const outgoingMessageElement = createChatMessageElement(outgoingMessageHtml, "message--outgoing");
-    outgoingMessageElement.querySelector(".message__text").innerText = currentUserMessage;
-    chatHistoryContainer.appendChild(outgoingMessageElement);
-
-    messageForm.reset(); // Clear input field
-    document.body.classList.add("hide-header");
-    setTimeout(displayLoadingAnimation, 500); // Show loading animation after delay
-};
-
-// Toggle between light and dark themes
-themeToggleButton.addEventListener('click', () => {
-    const isLightTheme = document.body.classList.toggle("light_mode");
-    localStorage.setItem("themeColor", isLightTheme ? "light_mode" : "dark_mode");
-
-    // Update icon based on theme
-    const newIconClass = isLightTheme ? "bx bx-moon" : "bx bx-sun";
-    themeToggleButton.querySelector("i").className = newIconClass;
-});
-
-// Clear all chat history
-clearChatButton.addEventListener('click', () => {
-    if (confirm("Are you sure you want to delete all chat history?")) {
-        localStorage.removeItem("saved-api-chats");
-
-        // Reload chat history to reflect changes
-        loadSavedChatHistory();
-
-        currentUserMessage = null;
-        isGeneratingResponse = false;
-    }
-});
 
 // Handle click on suggestion items
 suggestionItems.forEach(suggestion => {
@@ -341,10 +225,29 @@ suggestionItems.forEach(suggestion => {
     });
 });
 
-// Prevent default from submission and handle outgoing message
+// Prevent default form submission and handle outgoing message
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     handleOutgoingMessage();
+});
+
+// Event for file selection
+const fileUploadButton = document.getElementById("uploadButton");
+const fileUploadInput = document.getElementById("fileUpload");
+fileUploadButton.addEventListener('click', () => {
+    fileUploadInput.click();
+});
+
+fileUploadInput.addEventListener('change', (event) => {
+    attachedFile = event.target.files[0];
+    const fileInfoElement = document.getElementById("fileInfo");
+    const fileNameElement = document.getElementById("fileName");
+    if (attachedFile) {
+        fileNameElement.innerText = attachedFile.name;
+        fileInfoElement.style.display = "block";
+    } else {
+        fileInfoElement.style.display = "none";
+    }
 });
 
 // Load saved chat history on page load
