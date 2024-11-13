@@ -12,37 +12,81 @@ let isGeneratingResponse = false;
 const GOOGLE_API_KEY = "AIzaSyB3W-_MVc-EMvVeo4epuw5NFuTkZRw7IRo";
 const API_REQUEST_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`;
 // Reference to file upload button
+// Riferimenti agli elementi del form
 const fileUploadButton = document.getElementById("uploadButton");
 const fileUploadInput = document.getElementById("fileUpload");
+let attachedFile = null;
 
+// Apertura del selettore file quando si clicca sull'icona di caricamento
 fileUploadButton.addEventListener('click', () => {
     fileUploadInput.click();
 });
 
-fileUploadInput.addEventListener('change', async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+// Assegna il file scelto alla variabile attachedFile
+fileUploadInput.addEventListener('change', (event) => {
+    attachedFile = event.target.files[0];
+    const fileInfoElement = document.getElementById("fileInfo");
+    const fileNameElement = document.getElementById("fileName");
 
-    try {
-        // Here you would implement the API request to send the file to Gemini
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(API_REQUEST_URL, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error('File upload failed');
-
-        const responseData = await response.json();
-        console.log("File uploaded successfully:", responseData);
-
-        // Display success message or update chat with file upload response
-    } catch (error) {
-        console.error("Error uploading file:", error);
+    if (attachedFile) {
+        fileNameElement.innerText = attachedFile.name;
+        fileInfoElement.style.display = "block";
+    } else {
+        fileInfoElement.style.display = "none";
     }
 });
+
+
+// Funzione per gestire l'invio del prompt e allegato (se presente)
+const handleOutgoingMessage = async () => {
+    currentUserMessage = messageForm.querySelector(".prompt__form-input").value.trim();
+    if (!currentUserMessage || isGeneratingResponse) return;
+
+    isGeneratingResponse = true;
+
+    // Crea il messaggio in uscita e visualizzalo
+    const outgoingMessageHtml = `
+        <div class="message__content">
+            <img class="message__avatar" src="assets/profile.png" alt="User avatar">
+            <p class="message__text">${currentUserMessage}</p>
+        </div>
+    `;
+    const outgoingMessageElement = createChatMessageElement(outgoingMessageHtml, "message--outgoing");
+    chatHistoryContainer.appendChild(outgoingMessageElement);
+
+    // Mostra animazione di caricamento per la risposta
+    displayLoadingAnimation();
+
+    try {
+        // Prepara i dati da inviare all'API
+        const formData = new FormData();
+        formData.append("prompt", currentUserMessage);
+        if (attachedFile) {
+            formData.append("file", attachedFile);
+        }
+
+        // Invia richiesta all'API
+        const response = await fetch(API_REQUEST_URL, {
+            method: "POST",
+            body: formData,
+        });
+        const responseData = await response.json();
+
+        if (!response.ok) throw new Error(responseData.error.message);
+
+        // Ottieni la risposta e visualizzala
+        const responseText = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsedApiResponse = marked.parse(responseText);
+        const rawApiResponse = responseText;
+        showTypingEffect(rawApiResponse, parsedApiResponse, outgoingMessageElement.querySelector(".message__text"));
+    } catch (error) {
+        outgoingMessageElement.querySelector(".message__text").innerText = error.message;
+    } finally {
+        attachedFile = null; // Reimposta il file
+        isGeneratingResponse = false;
+    }
+};
+
 
 // Load saved data from local storage
 const loadSavedChatHistory = () => {
