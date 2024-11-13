@@ -237,6 +237,17 @@ body.hide-header .header{
 .prompt__form-input:valid ~ #deleteButton{
     right: 3.5rem;
 }
+.prompt__form-button#uploadButton {
+    right: 4rem;
+}
+
+.prompt__form-button#uploadButton:hover {
+    background: var(--button-hover-color);
+}
+
+.prompt__form-input:valid ~ #uploadButton {
+    right: 6rem;
+}
 
 .prompt__disclaim{
     text-align: center;
