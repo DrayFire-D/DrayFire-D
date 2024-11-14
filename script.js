@@ -11,6 +11,19 @@ let isGeneratingResponse = false;
 
 const GOOGLE_API_KEY = "AIzaSyB3W-_MVc-EMvVeo4epuw5NFuTkZRw7IRo";
 const API_REQUEST_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`;
+const premiumButton = document.getElementById("premiumButton");
+const premiumSection = document.getElementById("premiumSection");
+const closePremiumButton = document.getElementById("closePremiumButton");
+
+// Mostra la sezione dei piani a pagamento quando si clicca sulla stella
+premiumButton.addEventListener("click", () => {
+    premiumSection.classList.remove("hide");
+});
+
+// Nasconde la sezione dei piani a pagamento quando si clicca su "Chiudi"
+closePremiumButton.addEventListener("click", () => {
+    premiumSection.classList.add("hide");
+});
 
 // Load saved data from local storage
 const loadSavedChatHistory = () => {
