@@ -70,15 +70,28 @@
                 <button class="prompt__form-button" id="deleteButton">
                     <i class='bx bx-trash'></i>
                 </button>
+                <button type="button" class="prompt__form-button" id="premiumButton">
+                    <i class='bx bx-star'></i>
+                </button>
             </div>
          </form>
         <p class="prompt__disclaim">
             DrayFire-D may display inaccurate info, including about people, so double-check its responses.
         </p>
     </section>
-
-
-
+   <!-- Sezione piani a pagamento nascosta -->
+<section id="premiumSection" class="premium-section hide">
+    <div class="premium-content">
+        <h2>Paid Plans</h2>
+        <p>Check out our plans for getting the most out of DrayFire-D Gemini:</p>
+        <ul>
+            <li><strong>Basic Plan <div class="header__title">15€</div></strong>: Limited access and standard functionality</li>
+            <li><strong>Premium Plan <div class="header__title">25€</div></strong>: Access to advanced features and priority support</li>
+            <li><strong>Pro Plan <div class="header__title">35€</div></strong>: Full access, dedicated support, and new features</li>
+        </ul>
+        <button id="closePremiumButton">Close</button>
+    </div>
+</section>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="script.js"></script>
